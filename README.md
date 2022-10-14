@@ -4,9 +4,6 @@ regex module for Picat
 This is an experimental module for handling regexes in Picat.
 
 It is a interface to PCRE2 (https://www.pcre.org/current/doc/html/index.html) with some selected functionality.
-
-The documentation for PCRE2 is https://www.pcre.org/current/doc/html/index.html
-
 Especially interesting are probably these pages:
 - pcre2pattern: https://www.pcre.org/current/doc/html/pcre2pattern.html
 - pcre2syntax: https://www.pcre.org/current/doc/html/pcre2syntax.html
@@ -14,37 +11,46 @@ Especially interesting are probably these pages:
 
 For more information and examples regarding regexes see for example:
 - https://www.rexegg.com/ 
-  Here's an overview of operators and symbols:  
-  https://www.rexegg.com/regex-quickstart.html
+  Here's an overview of operators and symbols: https://www.rexegg.com/regex-quickstart.html
 - https://www.regular-expressions.info/
 
 
-This regex module does not cover the complete PCRE2 API, far from it.
-Instead it containts some few predicates/functions, mainly taken
-from my own use cases of regular expressions from my experience
-as a long time Perl programmer.
+This regex module does not cover the complete PCRE2 API, far from it. Instead it containts some few predicates/functions, mainly taken from my own use cases of regular expressions from my experience as a long time Perl programmer.
 
 
 ## Files:
-- emu/bp_pcre2.c
-- emu/cpreds.c (includes the new regex functions)
+The files in this repo is:
+- emu/bp_pcre2.c 
+  The C function with calls to PCRE.
+- emu/cpreds.c 
+  Includes the new regex functions.
 - emu/Makefile.linux64_pcre2
-- emu/picat_utilities.h (needed for v3.3#3 since the current file is not correct in the defintion of `cstring_to_picat(char* ch_ptr)`. It should be `cstring_to_picat(char* ch_ptr, int n)`)
+- emu/picat_utilities.h
+  This is eeded for Picat v3.3#3 since the current file is not correct in the defintion of `cstring_to_picat(char* ch_ptr)`. It should be `cstring_to_picat(char* ch_ptr, int n)`)
 - emu/test_regex.pi
+  Some tests (`go/0`. `go2/0` .. `go9/0`) testing different ascpects of the regex module.
 - lib/regex.pi
+  The Picat predicates/functions using the interface defined in bp_pcre2.c.
 
 
 In ./ there are some test programs for the regex module and some other regex related programs.
 
 Testing the regex module (i.e. `import regex.`)
 - regex_test_emu.pi
+  Some othe tests of the regex module.
 - wordle_regex.pi
-. regex_match_number.pi
+  Wordle solver.
+. regex_match_number.pi  
 - make_regex2.pi 
+  Creates regexes given a list of words, and test them using the regex module. (This is a variant of my http://hakank.org/picat/make_regex.pi).
 
 Some other regex related programs which does not require the regex module but I thought was appropritate to include
 - regex_crossword.pi
+  Solving some of the regex crosswords from https://regexcrossword.com
+  
 - regex_generating_strings_v3.pi
+  Generating the possible strings given a regex. Note that the supported regexes are quite limited, e.g. no backreferences etc.
+
 
 ## Compiling and testing
 
@@ -91,35 +97,34 @@ The regex module has been developed on a Linux Ubuntu 20.04 system. To compile i
    ```
 
 
-## Picat module regex
+## Supported predicates/functions in the regex module
 After compiling the new picat program the `import regex.` a couple of Picat predicates/functions available (see lib/regex.pi for details). Here is a short description of the module.
 
+* Pattern is a PCRE2 pattern. For details, see https://www.pcre.org/current/doc/html/pcre2pattern.html
 
-### Supported predicates/functions
-
-Pattern is a PCRE2 pattern. For details, see https://www.pcre.org/current/doc/html/pcre2pattern.html
-
-The regexes with '\' (\s, \w, etc) must be double quoted, e.g. the regex "^(\w){3}\s+(\w)+$" must be written as
-   "^(\\w){3}\\s+(\\w)+$"
+  The regexes with '\' (\s, \w, etc) must be double quoted, e.g. the regex "^(\w){3}\s+(\w)+$" must be written as
+  
+       "^(\\w){3}\\s+(\\w)+$"
    
-Another gotcha is that string quotes ('"') must be quotes as well, e.g.
+  Another gotcha is that string quotes ('"') must be quotes as well, e.g.
 
         "^([^\"]+?\"(.+?)\"\\s+(.+?)$"
 
-Subject is a string. 
-Capture is a list of the captures (empty if there is no capture groups).
+* Subject is a string. 
+* Capture is a list of the captures (empty if there is no capture groups).
+
+Here are the functions/predicates:
 
 - `regex(Pattern,Subject)`
   True of the string Subject matches the regex Pattern.
 
 - `regex(Pattern,Subject,Capture)`
-  True of the string Subject matches the regex Pattern. Also
-  the list Capture will contain the captures of the Pattern (if any).
+  True of the string Subject matches the regex Pattern. Also the list Capture will contain the captures of the Pattern (if any).
 
 - `regex_compile(Pattern)`
   Compile (caches) the regex Pattern to be used with regex_match/2-3.
-  Note: as of now, this is a global pattern so one cannot cache
-  more than one pattern at each time. 
+  
+  Note: as of now, this is a global pattern so one cannot cache more than one pattern at each time. 
 
 - `regex_match(String)`
   `regex_match(String,Capture)`
@@ -129,9 +134,9 @@ Capture is a list of the captures (empty if there is no capture groups).
 - `regex_replace(Pattern,Replacement,Subject,Replaced)`
   `Replaced = regex_replace(Pattern,Replacement,Subject)`
 
-  Replace all occurrences of Pattern in the Subject with the  string Replacement. The output is the string Replaced. In Replacement one can use backreferences such as  "$1", etc.
+   Replaces all occurrences of Pattern in the Subject with the  string Replacement. The output is the string Replaced. In Replacement one can use backreferences such as  "$1", etc.
 
-  `regex_replace2(Subject,Pattern,Replacement) = Replaced`
+- `regex_replace2(Subject,Pattern,Replacement) = Replaced`
   This is a variant with the string Subject is in the first position to simplify chaining of replacements. 
 
   Here's a simple example of categorizing characters in vowels and consonants:
@@ -148,7 +153,7 @@ Capture is a list of the captures (empty if there is no capture groups).
 - `regex_find_all(Pattern,Subject,Matches)`
   `regex_find_all(Pattern,Subject) = Matches`
 
-  The list Matches contain all occurrences of Pattern in  the string Subject.
+  The list Matches contain all occurrences of Pattern in the string Subject.
   
   This tries to simulate Perl's 
   ```
@@ -168,11 +173,10 @@ Capture is a list of the captures (empty if there is no capture groups).
 %   it's slow and doesn't handle zero-width patterns etc.
 
 
-
 ### Flags
-The program is compiled without any flags (except for regex_replace which replaces all occurrences).
+The program bp_pcre2.c is compiled without any flags (except for regex_replace which replaces all occurrences).
 
-The flags (that we all know and love from Perl) are the following from https://www.pcre.org/current/doc/html/pcre2pattern.html#internaloptions )
+The flags - that we all know and love from Perl - are the following from https://www.pcre.org/current/doc/html/pcre2pattern.html#internaloptions )
 ```
 - (?i)  for PCRE2_CASELESS
 - (?m)  for PCRE2_MULTILINE
@@ -193,7 +197,7 @@ Backslash (`\`= in patterns must have an extra backslash. For example: `"\s"` mu
 
 ### Captures
 
-The first element in Captures is the string from the first matched position to the last matched position. The rest of the elements are the individual grouping  captures (if any).
+Except for the predicates in the regex_find* family, the first element in Captures is the string from the first matched position to the last matched position. The rest of the elements are the individual grouping  captures (if any).
 
 For example, in the call
    ```
@@ -201,13 +205,15 @@ For example, in the call
    ```
 
 the Capture is 
+
     [hakan was a Swedish bassist,hakan,bassist]
 i.e. 
+
    Capture[1] = "hakan was a Swedish bassist"
    Capture[2] = "hakan"
    Capture[3] = "bassist"
 
-This can be confusing since often one wants to ignore the first "global" capture.  One way might be enumerate the captured fields and ignore that capture, e.g.
+This can be confusing since often one wants to ignore the first "global" capture. One way might be enumerate the captured fields and ignore that first capture, e. g.
    ```
    Picat> regex_match_capture("^(hakank?) was a Swedish (dancer|bassist|singer|dueller)$",
             "hakan was a Swedish bassist",[_, Who, What]),
@@ -217,6 +223,7 @@ This can be confusing since often one wants to ignore the first "global" capture
    ```
 
 Note: To complicate the matter, the captures in `regex_find/3` does not have the first element as the full matched string; All[1] (or Capture[1]) is there the first matched group. This might be considered a feature...
+
 
 ### The C functions
 The Picat definitions in lib/regex.pi calls the C function written in emu/bp_pcre2.c. Here is a short description of these with the syntax how to call them from Picat:
