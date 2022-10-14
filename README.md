@@ -170,10 +170,11 @@ Here are the functions/predicates:
   X = ['C','V','C','V','C',' ','C','C','V','C','C','V','C','C','V','C','C']
   ```
 
-- `regex_find(Pattern,Subject,Capture)`
-  `regex_find(Pattern,Subject) = Capture`
+- `regex_find(Pattern,Subject,Captures)`
+  `regex_find(Pattern,Subject) = Captures`
 
-  Find the first occurence of Pattern in Subject and outputs it in Capture.
+  Find the ***first*** occurrence of Pattern in Subject and outputs it in Capture.
+  Note: The list Captures contains ontly the captured groups, not the "global" matched string.
 
 - `regex_find_all(Pattern,Subject,Matches)`
   `regex_find_all(Pattern,Subject) = Matches`
@@ -182,20 +183,17 @@ Here are the functions/predicates:
   
   This tries to simulate Perl's 
   ```
-      while(!Pattern!gsm) {
+      while($text =~ !Pattern!gsm) {
        # ...
       }
   ```
-  Note that for strings with newlines, the Pattern should start with `"(?s)"` or `"(?sm)"` for matching newlines.
+  For strings with newlines, the Pattern should start with `"(?s)"` or `"(?sm)"` for matching newlines.
+  Note: The list Matches contains ontly the captured groups, not the "global" matched string.
 
 - `regex_find_num(Pattern,Subject,Num,Matches)`
 
   The list Matches contains the first Num occurrences of Pattern in  the string Subject.
-
-% - regex_match_all(Pattern,Subject,Matches)
-%   regex_match_all(Pattern,Subject) = Matches
-%   regex_match_all/2-3 has been obsoleted by regex_find* since
-%   it's slow and doesn't handle zero-width patterns etc.
+  Note: The list Matches contains ontly the captured groups, not the "global" matched string.
 
 
 ### Flags
