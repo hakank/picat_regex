@@ -19,36 +19,56 @@ This regex module does not cover the complete PCRE2 API, far from it. Instead it
 
 
 ## Files:
-The files in this repo is:
+The files in this repo are:
 - emu/bp_pcre2.c 
+
   The C function with calls to PCRE.
+  
 - emu/cpreds.c 
+
   Includes the new regex functions.
+  
 - emu/Makefile.linux64_pcre2
+
 - emu/picat_utilities.h
-  This is eeded for Picat v3.3#3 since the current file is not correct in the defintion of `cstring_to_picat(char* ch_ptr)`. It should be `cstring_to_picat(char* ch_ptr, int n)`)
+
+  This is needed for Picat v3.3#3 since the current file is not correct in the defintion of `cstring_to_picat(char* ch_ptr)`. It should be `cstring_to_picat(char* ch_ptr, int n)`). This should be fixed for later versions.
+  
 - emu/test_regex.pi
+
   Some tests (`go/0`. `go2/0` .. `go9/0`) testing different ascpects of the regex module.
+  
 - lib/regex.pi
+
   The Picat predicates/functions using the interface defined in bp_pcre2.c.
 
 
 In ./ there are some test programs for the regex module and some other regex related programs.
 
 Testing the regex module (i.e. `import regex.`)
+
 - regex_test_emu.pi
+
   Some othe tests of the regex module.
+  
 - wordle_regex.pi
-  Wordle solver.
+
+  Wordle solver. It uses the wordlist wordle_small.txt
+  
 . regex_match_number.pi  
+  
 - make_regex2.pi 
+
   Creates regexes given a list of words, and test them using the regex module. (This is a variant of my http://hakank.org/picat/make_regex.pi).
 
 Some other regex related programs which does not require the regex module but I thought was appropritate to include
+
 - regex_crossword.pi
+
   Solving some of the regex crosswords from https://regexcrossword.com
   
 - regex_generating_strings_v3.pi
+
   Generating the possible strings given a regex. Note that the supported regexes are quite limited, e.g. no backreferences etc.
 
 
@@ -68,7 +88,7 @@ The regex module has been developed on a Linux Ubuntu 20.04 system. To compile i
   $ sudo apt install pcre2-8
   ```
 
-  (The `-8` part is for the size of the characters used in the regexps
+  (The `-8` part is for the size of the characters used in the regexps.)
 
 * cd to the directory emu and run the make
     
