@@ -76,9 +76,9 @@ Some other regex related programs which does not require the regex module but I 
 
 The regex module has been developed on a Linux Ubuntu 20.04 system. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat333.tar.gz).
 
-* Unpack the contents for the picat *.tar.gz in a directory, say picat_333_regex
+* Unpack the contents for the picat *.tar.gz in a directory, say `/home/hakank/picat`.
 
-* Copy the files in this repo's directories `lib` and `emu` to the corresponding directories in the created directory 
+* Copy the files in this repo's directories `lib` and `emu` to the corresponding directories in the newly created directory (`/home/hakank/picat/lib`, `/home/hakank/picat/emu/`.
 
 * Ensure that the pcre2-8 library is installed.
 
@@ -99,6 +99,25 @@ The regex module has been developed on a Linux Ubuntu 20.04 system. To compile i
      
    The Picat executable picat is now created (if no errors occurred) in this directory.
    
+* make the Picat program be aware of the regex module
+
+  The next step is to let the Picat executable be aware of the regex module. This can be done in two ways. Here we assume that `regex.pi` is in the direcotry `/home/hakank/picat/lib`.
+  
+  a) With the `-path` flag:
+   
+     ```
+     $ picat -path /home/hakank/picat/lib  program.pi
+     ```
+     
+  b) Or set the environment variable PICATPATH
+  
+     ```
+     $ expport PICATPATH=".;/home/hakank/picat/lib"
+     $ picat program.pi
+     ```
+  
+   
+
 * test that it works as expected
    ```
    $ ./picat
