@@ -118,11 +118,14 @@ The regex module has been developed on a Linux Ubuntu 20.04 system. To compile i
 
 
 ## Supported predicates/functions in the regex module
+
 After compiling the new picat program the `import regex.` a couple of Picat predicates/functions available (see lib/regex.pi for details). Here is a short description of the module.
+
+Here are the (type of) parameters for the functions:
 
 * Pattern is a PCRE2 pattern. For details, see https://www.pcre.org/current/doc/html/pcre2pattern.html
 
-  The regexes with '\' (\s, \w, etc) must be double quoted, e.g. the regex "^(\w){3}\s+(\w)+$" must be written as
+  The regexes with a backslash (\s, \w, etc) must be double quoted, e.g. the regex "^(\w){3}\s+(\w)+$" must be written as
   
        "^(\\w){3}\\s+(\\w)+$"
    
@@ -130,8 +133,10 @@ After compiling the new picat program the `import regex.` a couple of Picat pred
 
         "^([^\"]+?\"(.+?)\"\\s+(.+?)$"
 
-* Subject is a string. 
-* Capture is a list of the captures (empty if there is no capture groups).
+* Subject is a string. It is the string/text that we want to do some operation on with the regex.
+
+* Capture is a list of the captures (empty if there is no capture groups). See below for more details about the captures.
+  
 
 Here are the functions/predicates:
 
@@ -209,10 +214,6 @@ The flags - that we all know and love from Perl - are the following from https:/
 The flags can be combined, e.g. `(?sm)` for combining PCRE2_MULTILINE and PCRE2_DOTALL.
 
 Unsetting is done with "-", e.g. `(?sx)` Setting and unsetting can also be done, e.g. (?im-sx).
-
-### Quoting of backslashes.
-
-Backslash (`\`= in patterns must have an extra backslash. For example: `"\s"` must be written `"\\s".
 
 
 ### Captures
