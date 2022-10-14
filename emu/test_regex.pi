@@ -1,0 +1,505 @@
+/* 
+
+  Testing the regex* predicates in Picat.
+
+  go/0 contains some small experiments. The following go's are
+  some larger use cases (or silly experiments).
+
+  (During playing with the regexes, I also got a little side tracked
+   to write some DCG variants, either for generating strings 
+   to test the regexes with or just to compare the corresponding DCG.)
+
+  This program was created by Hakan Kjellerstrand, hakank@gmail.com
+  See also my Picat page: http://www.hakank.org/picat/
+
+*/
+
+import util.
+import regex.
+
+main => go.
+
+/*
+  Here are some small and asorted experiments, testing different features of 
+  PCRE2 and/or the regex module.
+
+  [And I'm not sure exactly why it's that many musical references here. 
+   Probably it's since I started playing with the regex "^([ab]*)(.+)","abbas" 
+   and then the imagination went its own way. Sorry about that.]
+
+*/
+go =>
+  println("regex:"),
+  println("abbas"),
+  if regex("^([ab]*)(.+)","abbas") then
+    println(ok_abba)
+  else
+    println(not_ok_abba)
+  end,
+  nl,
+
+  println("håkan regex"),
+  if regex("h[åa]+kan","håkan") then
+    println(ok_hakan)
+  else
+    println(not_ok_hakan)
+  end,
+  nl,
+  println("regex and capture:"),
+  if regex("^([ab]*s)\\s*(.+?)$","abbas kaviar",Captures) then
+    % capture: [[a,b,b,a,s,' ',k,a,v,i,a,r],[a,b,b,a,s],[k,a,v,i,a,r]]
+    println(captures=Captures), 
+    foreach(C in Captures)
+      println(C=C.len)
+    end
+  else
+    println(not_ok_capture)
+  end,
+  nl,
+  % Cf the DCG "hakank_bassist" (tested in go6/0)
+  println("Multiline (håkan was a Swedish bassist):"),
+  if regex("(?sm)^([Hh][åa]+kank?).+?(Swedish|famous).+(dancer|bassist|singer|programmer|dueller)$",
+           "håkan was\na Swedish\nbassist",
+           Captures3) then
+    println(multiline=Captures3),
+    % Capture: [håkan,Swedish,bassist]
+    foreach(C in Captures3)
+      println(C=C.len)
+    end
+  else
+    println(multiline_hakan_not_ok)
+  end,
+
+  nl,
+  println("Caseless"),
+  if regex("(?i)abba is a\\s*.*\\s*group","ABBA is A Swedish Music Group",Captures4) then
+    % Capture: [ABBA is A Swedish Music Group]
+    println(ok_caseless=Captures4)
+  else
+    println(not_ok_caseless)  
+  end,
+  nl,
+
+  % This works with the option (*UTF) but not without
+  if regex("(*UTF)(?i)(HÅKAN)","håkan",CaptureHakan) then
+    println(case_hakan_ok=CaptureHakan)
+  else
+    println(case_hakan_notok)
+  end,
+  nl,
+  
+  println("Backref:"),
+  if regex("^(ho)\\1+$","hohohoho",BackRef)  then
+    println(ok_backref=BackRef)
+  else
+    println(not_ok_backref)
+  end,
+  
+  nl,
+  println("Comments:"),
+  if regex("([Tt]he .* (?:Swedish|English|American|Spanish)(?# or was it Danish) singer)","the great Swedish singer",Capture5) then
+    % The capture is: [the great Swedish singer]
+    println(ok_comment=Capture5)
+  else
+    println(not_ok_comment)  
+  end,
+  nl,
+
+  println("email:"),
+  if regex("^(.+)@(.+)\\.(\\w{2,6})$","hakan.kjellerstrand@gmail.com",Capture6) then
+    % The capture: [hakan.kjellerstrand,gmail,com]
+    println(ok_email=Capture6)
+  else
+    println(not_ok_email)  
+  end,
+  nl,  
+
+  println("\nTesting replace:"),
+  regex_replace("(a.+?b)","___","xxxaalllbyyy",Replaced1),  
+  println(replaced1=Replaced1), %  "xxx___yyy"
+  
+  % Groups are notified as $1, $2... in the replace string.
+  % Here we remove duplicated words
+  regex_replace("(.+?) \\1","$1","The author thinks thinks that that.",Replaced2a),
+  println(replaced2a=Replaced2a), % "The author thinks that."
+  
+  % The backreference \\g1 is the same as \\1
+  regex_replace("(.+?) \\g1","$1","The author thinks thinks that that.",Replaced2b),
+  println(replaced2b=Replaced2b), % "The author thinks that."
+  
+  regex_replace("(\\d+)","[:digit:]+","123abc456xyz7",Replaced3),
+  println(replaced3=Replaced3), %  "[:digit:]+abc[:digit:]+xyz[:digit:]+"
+  
+  regex_replace("(\\d+)","<$1>","123abc456xyz7",Replaced4),
+  println(replaced4=Replaced4), % "<123>abc<456>xyz<7>"
+  
+  % Swapping a <-> b
+  regex_replace("\\b(a.+?)\\b(b+?)\\b","$2 $1","xxx aaaaa bb yabyy aaa bbb",Replaced5),
+  println(replaced5=Replaced5), % "xxx bb aaaaa  yabyy bbb aaa "
+  
+  regex_replace("(\\d+)","$1+10","123 234 345 456",Replace6),
+  println(replace6=Replace6), % 123+10 234+10 345+10 456+10
+  % Evaluate the expressions. Note the split.
+  % -> [133,244,355,466]
+  println(parse_term_apply=[R.parse_term.apply : R in Replace6.split(" ")]), 
+
+  % As a function and applying a Picat function
+  Replaced7=regex_replace("\\b(\\w+)","$1","ABC DEF GHI").map(to_lowercase),
+  println(replaced7=Replaced7), % -> abc def ghi
+
+  % Insert " " between each word
+  % (From  https://www.rexegg.com/regex-lookarounds.html)
+  regex_replace("((?<=[a-z])+?)(?=[A-Z])","$1 ", "HaroldAndKumarGoToWhiteCastle",Replaced8),
+  println(replaced8=Replaced8), % -> Harold And Kumar Go To White Castle
+  
+
+  % Placing the subject string first makes chaining possible.
+  % Note: it's regex_replace2, not regex_replace.
+  println("\nregex_replace2 (chaining)"),
+  % -> "This is a short sentence."
+  println(regex_replace2("This is a long string.","long","short").regex_replace2("string","sentence")),
+  nl,
+
+
+  println("\nTesting regex_find_all"),
+
+  FindAll1 = regex_find_all("(.=.)","xxxa=1 b=2 c=3 d=4 e=5 zzzz"),
+  println(find_all=FindAll1), % -> [a=1,b=2,c=3,d=4,e=5]
+  
+  FindAll2 = regex_find_all("(\\d+)","123 4567 89103"),
+  println(find_all2=FindAll2), % -> [123,4567,89103]
+
+  % Together with lookbehind and lookahead
+  regex_find_all("((?<=#START#).*?(?=#END#))","#START#Picat#END# Something else #START#Prolog#END#",FindAll3),
+  println(find_all3=FindAll3), % -> [Picat,Prolog]
+
+  % Same without lookaround, though the grouping is different
+  regex_find_all("#START#(.*?)#END#","#START#Picat#END# Something else #START#Prolog#END#",FindAll4),
+  println(find_all4=FindAll4), % -> [Picat,Prolog#]
+  
+  println("\nSome larger tests of regex_replace:"),
+  % See go7/0 for testing larger strings.
+  /*
+  Abbas = Xs
+  Abbas's = Xs's
+  Abbasid = Xsid
+  Abbasid's = Xsid's
+  Babbage = BXge
+  Babbage's = BXge's
+  Barabbas = BarXs
+  Barabbas's = BarXs's
+  Sabbath = SXth
+  Sabbath's = SXth's
+  Sabbaths = SXths
+  cabbage = cXge
+  cabbage's = cXge's
+  cabbages = cXges
+  sabbatical = sXtical
+  sabbatical's = sXtical's
+  sabbaticals = sXticals
+  scabbard = scXrd
+  scabbard's = scXrd's
+  scabbards = scXrds
+  */
+  nl,
+  Words = read_file_lines("/usr/share/dict/words"),
+  foreach(Word in Words, regex("(?i)abba",Word), regex_replace("(?i)abba","X",Word,W2))
+    println(Word=W2)
+  end,
+  
+  nl,
+  println("\nSome larger strings"),
+  % WordsStr = read_file_chars("/usr/share/dict/words"), % 972124 bytes
+  WordsStr = read_file_chars("../words_lower.txt"),  % 4238782 bytes
+  if regex_find("(?i)abba",WordsStr,_) then
+     println(large_string_match_ok)
+  else
+     println(large_string_match_not_ok)  
+  end,
+
+  println("\nLarge string replace"),
+  regex_replace("(?i)(abba)","$1xxx",WordsStr,WordsStr2),
+  % println(wordsStr2=WordsStr2),
+  println(len_after=WordsStr2.len),
+  println(large_string_replace_ok),
+
+  println(ok),
+  nl,
+
+  nl.
+
+% Reading a wordlist and checking "a.*b.*c.*d.*e"
+% Using regex/2: 0.743s
+go2 =>
+  % Words = read_file_lines("/usr/share/dict/words"),
+  Words = read_file_lines("../words_lower.txt"),  
+  foreach(Word in Words)
+    % For /usr/share/dict/words we need (?i)
+    if regex_find("(?i)(a.*b.*c.*d.*e)",Word,Capture) then
+      println(Word=Capture)
+    end
+  end,
+  nl.
+
+% Reading a wordlist and checking "a.*b.*c.*d.*e"
+% Using regex_compile/1 and regex_match/1.
+% This is faster: 0.381s
+go3 =>
+  % Words = read_file_lines("/usr/share/dict/words"),  
+  Words = read_file_lines("../words_lower.txt"),
+  % For /usr/share/dict/words we need (?i)    
+  regex_compile("(?i)(a.*b.*c.*d.*e)"), 
+  foreach(Word in Words)
+    if regex_match(Word,[_,Capture]) then    
+      println(Word=Capture)
+    end
+  end,
+  nl.
+
+% Testing all the patterns: 1.636s
+% "a.*b.*c.*d.*e", "b.*c.*d.*e.f*,... "v.*w.*x.*y.*z"
+%
+% (Cf read_test.pi which use different approaches.)
+%
+go4 =>
+   garbage_collect(200_000_000),
+   Words = read_file_lines("../words_lower.txt"),
+   % Words = read_file_lines("/usr/share/dict/words"),
+   println(num_words=Words.len),
+   Alpha = lower(),
+   println(alpha=Alpha),
+   Len = 5,
+   AllMatch = [],
+   % Generate all the patterns "a.*b.*c.*d.*e", "b.*c.*d.*e.f*, etc
+   Patterns = [ [Alpha[J].to_string() : J in I..I+Len-1].join("|").replace('|',".*").flatten() : I in 1..Alpha.length-Len+1],
+   foreach(Pattern in Patterns) 
+      println(pattern=Pattern),
+      regex_compile(Pattern),
+      Match = [Word : Word in Words,regex_match(Word)],
+      println(Match),
+      println(len=Match.length),
+      if Match.length > 0 then
+         AllMatch := AllMatch ++ [[Match.length,Pattern]]
+      end,
+      nl        
+   end,
+   
+   println(AllMatch.sort_down()),
+
+   nl.
+
+%
+% From https://www.rexegg.com/regex-disambiguation.html#subroutines
+% 
+% The regex
+%   ^(A(?1)?Z)$
+% accept strings of the form
+%   A^nZ^n
+% As do
+%   A(\\R)?Z
+%
+% And the generating DCG:
+%  az --> "".
+%  az --> "A", az, "Z".
+% 
+go5 =>
+  az(String,[]), % generate A^nZ^n
+  regex("^(A(?1)?Z)$",String), % check it
+  println(String=ok),
+  regex("A(?R)?Z",String), % check it again
+  println(String=ok2),
+  az(String,[]),
+  println(String=ok_az),
+  nl,
+  (String.len < 20 -> fail ; true),
+  nl.
+
+/*
+  A DCG version of the "håkan was a Swedish bassist" regex test in go/0.
+
+  hakank_bassist = ok
+
+  Generating:
+  Hakank was a Swedish dancer
+  Hakank was a Swedish bassist
+  Hakank was a Swedish singer
+  Hakank was a Swedish programmer
+  Hakank was a Swedish dueller
+  Hakank was a Swedish
+  dancer
+  Hakank was a Swedish
+  bassist
+
+*/
+go6 =>
+  println("Checking:"),
+  if hakank_bassist("Håkan was a Swedish bassist",[]) then
+    println(hakank_bassist=ok)
+  else
+    println(hakank_bassist=not_ok)  
+  end,
+  println("\nGenerating:"),
+  hakank_bassist(S,[]),
+  println(S),
+  fail,
+  nl.
+
+%
+% Quite large strings.
+%
+% For very large strings (say > 20Mb), we must allocate
+% at least 2 times the length using garbage_collect/1.
+% Otherwise a Stack Overflow might be thrown.
+%
+% 4 times length of words_lower.txt = 4*4238782 = 16955128 ~ 16Mb
+% 5 times length of words_lower.txt = 5*4238782 = 21193910 ~ 21 Mb
+%
+go7 => 
+  WordsStr = read_file_chars("../words_lower.txt"),  % len 4238782bytes
+  WordsStr := WordsStr ++ WordsStr ++ WordsStr ++ WordsStr ++ WordsStr ++ WordsStr,  % Test a larger string
+  AllocTimes = 2,
+  println(len_before=WordsStr.len),
+  % println(allocate=(AllocTimes*WordsStr.len)),
+  % garbage_collect(AllocTimes*WordsStr.len), 
+  garbage_collect(300_000_000), % it's faster if we allocates more memory
+
+  time(regex_replace("(?i)(abba)","$1xxx",WordsStr,WordsStr2)),
+  % println(wordsStr2=WordsStr2),
+  println(len_after=WordsStr2.len),
+  println(large_string_replace_ok),
+  nl.
+
+%
+% Testing regex_find_all/3, regex_find_num/4.
+%
+go8 =>
+  println("Testing regex_find_all* family"),
+  regex_find_all("(?=(\\w+))","ABCDE",All),  
+  println(All), % [ABCDE, BCDE, CDE, DE, E]
+
+  nl,
+  regex_find_all("(..)","ABCDEFG",All2),
+  println(all2=All2), % [AB,CD,EF]
+  nl,
+  
+  % From https://stackoverflow.com/questions/28286652/regular-expression-to-obtain-all-substrings-of-length-n
+  regex_find_all("(?=(.{3}))","baababacb",All3),
+  println(all3=All3), % [baa,aab,aba,bab,aba,bac,acb]
+
+  nl,
+
+  %
+  % A wordlist as a single string.
+  %
+  garbage_collect(100_000_000), % preallocate memory for large strings
+  Words = read_file_chars("../words_lower.txt"),
+  % Words := Words ++ Words ++ Words ++ Words ++ Words,
+  
+  println("Number of words matching 'fu'"),
+  regex_find_all("(?i)\\b(.*?fu.*?)\\b",Words,All4),
+  println(all4_len=All4.len),
+
+  println("\n5 letter words matching 'fu':"),
+  regex_find_all("\\b(?=.{5}\\b)(.*?fu.*?)\\b",Words,All5), % 5-letter words with ".*li.*"
+  println(all5=All5),
+
+  println("\nFirst 4 12-letter words:"),
+  regex_find_num("\\b(.{12})\\b",Words,4,All6), % First 4 12-letter words
+  println(all6=All6),
+  
+  % All7=regex_find_all("\\b(.*?[aeiou]{2,}.*?)\\b",Words), % double vowels
+  
+  % Find 10 first 10-letter word matches
+  println("\nFirst 10 10-letter words matching 'abba'"),
+  regex_find_num("\\b(?=.{10})(.+?abba.+?)\\b",Words,10,All7), 
+  println(all7=All7),
+  println(len=All7.len),
+
+  % First 20 letter word
+  println("\nFirst first 20 letter word:"),
+  regex_find("\\b(.{20})\\b",Words,All8),
+  println(all8=All8),
+
+  nl,
+  % From https://www.rexegg.com/regex-disambiguation.html
+  regex_find_all("(\\S+):(?|([^\"\\s]+)|\"([^\"]+))","song:\"Sweet Home Alabama\" fruit:apple color:blue motto:\"Don't Worry\"",All9),
+  println(all9=All9), % [[song,Sweet Home Alabama],[fruit,apple],[color,blue],[motto,Don't Worry]]
+
+  nl.
+
+/*
+  This tests different kind of groupings for regex_find_all/3.
+  For example that no capture group and one capture group give the 
+  same answer, but with two capture groups it's different.
+*/
+go9 => 
+  regex_find_all("(?=(\\w+))","ABCDE",All),  
+  println(all=All), % [ABCDE, BCDE, CDE, DE, E],
+  nl,
+  println("Two characters and no capture group:"),
+  regex_find_all("..","ABCDEFG",All2a),
+  println(all2a=All2a), % [AB,CD,EF]
+
+  println("Two characters in one capture group:"),
+  regex_find_all("(..)","ABCDEFG",All2b),
+  println(all2b=All2b), % [AB,CD,EF]
+
+  println("Two characters in two capture groups:"),
+  regex_find_all("(.)(.)","ABCDEFG",All2c),
+  println(all2c=All2c), % [[A,B],[C,D],[E,F]]
+
+  nl,
+  println("Four characters, no capture group:"),  
+  regex_find_all("....","ABCDEFGH",All3a), 
+  println(all3a=All3a), % [ABCD,EFGH]
+  
+  println("Four characters in one capture group:"),  
+  regex_find_all("(....)","ABCDEFGH",All3b), 
+  println(all3b=All3b), % [ABCD,EFGH]
+
+  println("Four characters in two capture groups:"),  
+  regex_find_all("(..)(..)","ABCDEFGH",All3c), 
+  println(all3c=All3c), % [[AB,CD],[EF,GH]]
+
+
+
+  nl,
+  % Some other test with/without capture and with/without matching.
+  regex_find_all("(word)","word",All4),
+  println(all4=All4), % word
+
+  if regex_find_all("(word)","xxx",All5) then
+    println(all5=All5)
+  else
+    println(all5=not_ok)
+  end,
+
+  if regex_find_all("word","word",All6) then
+    println(all6=All6)
+  else
+    println(all6=not_ok)
+  end,
+
+  nl.
+
+
+% For go6/0: Generate A^nZ^n.
+az --> "".
+az --> "A", az, "Z".
+
+% for go5/0 
+lower() = [chr(I+96) : I in 1..26].
+
+
+% For go6/0
+%
+% Personal note:
+% All of the generated sentences are not necessarily true facts, but at least one is.
+% 
+hakank_bassist --> ("H" ; "h"), ("a" ; "å"),"kan",("k";""), space,
+                   ("was" ; "is"), space, "a", space,
+                   ("Swedish" ; "famous"), space,
+                   ("dancer" ; "bassist" ; "singer" ; "programmer" ; "dueller").
+% space --> (" "; "\n"). 
+ space --> " ". % Let's keep it simpler with just a single space.
+

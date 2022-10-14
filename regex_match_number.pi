@@ -1,0 +1,143 @@
+/* 
+
+  Matching numbers in plain English using regex in Picat.
+
+  From https://www.rexegg.com/regex-trick-numbers-in-english.html
+  """
+  Regex to Match Numbers in Plain English
+  """
+
+  It uses defined subroutines: (?(DEFINE) ....)
+
+  This program was created by Hakan Kjellerstrand, hakank@gmail.com
+  See also my Picat page: http://www.hakank.org/picat/
+
+*/
+
+import regex.
+
+main => go.
+
+/*
+  one trillion = ok = [one trillion]
+  seven hundred twenty two = ok = [seven hundred twenty two]
+  zero point nine five = ok = [zero point nine five]
+  nine hundred ninety nine thousand two hundred thirteen = ok = [nine hundred ninety nine thousand two hundred thirteen]
+  seven = ok = [seven]
+  zillion = not_ok
+  twenty zillion = ok = [twenty]
+
+  Note the last example: It matches 'twenty' but not 'zillion'
+*/
+go =>
+  regex_def(Regex1),
+  Regex = Regex1, 
+  Strings = [
+             "one trillion",
+             "seven hundred twenty two",
+             "zero point nine five",
+             "nine hundred ninety nine thousand two hundred thirteen",
+             "seven",
+             "zillion",
+             "twenty zillion"
+             ],
+  member(String,Strings),
+  ( regex(Regex,String,Capture) -> println(String=ok=Capture) ; println(String=not_ok)),
+  fail,  
+  nl.
+
+
+regex_def(Regex) =>
+  Regex = "(?x)           # free-spacing mode
+  (?(DEFINE)
+  # Within this DEFINE block, we'll define many subroutines
+  # They build on each other like lego until we can define
+  # a 'big number'
+
+  (?<one_to_9>  
+  # The basic regex:
+  # one|two|three|four|five|six|seven|eight|nine
+  # We'll use an optimized version:
+  # Option 1: four|eight|(?:fiv|(?:ni|o)n)e|t(?:wo|hree)|
+  #                                          s(?:ix|even)
+  # Option 2:
+  (?:f(?:ive|our)|s(?:even|ix)|t(?:hree|wo)|(?:ni|o)ne|eight)
+  ) # end one_to_9 definition
+
+  (?<ten_to_19>  
+  # The basic regex:
+  # ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|
+  #                                              eighteen|nineteen
+  # We'll use an optimized version:
+  # Option 1: twelve|(?:(?:elev|t)e|(?:fif|eigh|nine|(?:thi|fou)r|
+  #                                             s(?:ix|even))tee)n
+  # Option 2:
+  (?:(?:(?:s(?:even|ix)|f(?:our|if)|nine)te|e(?:ighte|lev))en|
+                                          t(?:(?:hirte)?en|welve)) 
+  ) # end ten_to_19 definition
+
+  (?<two_digit_prefix>
+  # The basic regex:
+  # twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety
+  # We'll use an optimized version:
+  # Option 1: (?:fif|six|eigh|nine|(?:tw|sev)en|(?:thi|fo)r)ty
+  # Option 2:
+  (?:s(?:even|ix)|t(?:hir|wen)|f(?:if|or)|eigh|nine)ty
+  ) # end two_digit_prefix definition
+
+  (?<one_to_99>
+  (?&two_digit_prefix)(?:[- ](?&one_to_9))?|(?&ten_to_19)|
+                                              (?&one_to_9)
+  ) # end one_to_99 definition
+
+  (?<one_to_999>
+  (?&one_to_9)[ ]hundred(?:[ ](?:and[ ])?(?&one_to_99))?|
+                                            (?&one_to_99)
+  ) # end one_to_999 definition
+
+  (?<one_to_999_999>
+  (?&one_to_999)[ ]thousand(?:[ ](?&one_to_999))?|
+                                    (?&one_to_999)
+  ) # end one_to_999_999 definition
+
+  (?<one_to_999_999_999>
+  (?&one_to_999)[ ]million(?:[ ](?&one_to_999_999))?|
+                                   (?&one_to_999_999)
+  ) # end one_to_999_999_999 definition
+
+  (?<one_to_999_999_999_999>
+  (?&one_to_999)[ ]billion(?:[ ](?&one_to_999_999_999))?|
+                                   (?&one_to_999_999_999)
+  ) # end one_to_999_999_999_999 definition
+
+  (?<one_to_999_999_999_999_999>
+  (?&one_to_999)[ ]trillion(?:[ ](?&one_to_999_999_999_999))?|
+                                    (?&one_to_999_999_999_999)
+  ) # end one_to_999_999_999_999_999 definition
+
+  (?<bignumber>
+  zero|(?&one_to_999_999_999_999_999)
+  ) # end bignumber definition
+
+  (?<zero_to_9>
+  (?&one_to_9)|zero
+  ) # end zero to 9 definition
+
+  (?<decimals>
+  point(?:[ ](?&zero_to_9))+
+  ) # end decimals definition
+  
+) # End DEFINE
+
+
+####### The Regex Matching Starts Here ########
+(?&bignumber)(?:[ ](?&decimals))?
+
+### Other examples of groups we could match ###
+#(?&bignumber)
+# (?&one_to_99)
+# (?&one_to_999)
+# (?&one_to_999_999)
+# (?&one_to_999_999_999)
+# (?&one_to_999_999_999_999)
+# (?&one_to_999_999_999_999_999)  ".

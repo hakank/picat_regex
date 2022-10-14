@@ -1,0 +1,399 @@
+/* 
+
+  Module for handling regexes (PCRE2) in Picat.
+
+  The documentation for PCRE2 is 
+  https://www.pcre.org/current/doc/html/index.html
+
+  Especially interesting are probably these pages:
+  - pcre2pattern: https://www.pcre.org/current/doc/html/pcre2pattern.html
+  - pcre2syntax: https://www.pcre.org/current/doc/html/pcre2syntax.html
+  - pcre2perform: https://www.pcre.org/current/doc/html/pcre2perform.html
+
+  For more information and examples regarding regexes see for example:
+  - https://www.rexegg.com/ 
+    Here's an overview of operators and symbols:  
+      https://www.rexegg.com/regex-quickstart.html
+  - https://www.regular-expressions.info/
+
+
+  This regex module does not cover the complete PCRE2 API, far from it.
+  Instead it containts some few predicates/functions, mainly taken
+  from my own use cases of regular expressions from my experience
+  as a long time Perl programmer.
+
+  * Supported predicates/functions
+
+    Pattern is a PCRE2 pattern. For details, see
+    https://www.pcre.org/current/doc/html/pcre2pattern.html
+
+    The regexes with '\' (\s, \w, etc) must be double quoted,
+    e.g. the regex "^(\w){3}\s+(\w)+$" must be written as
+      "^(\\w){3}\\s+(\\w)+$"
+    Another gotcha is that string quotes ('"') must be quotes as
+    well, e.g.
+        "^([^\"]+?\"(.+?)\"\\s+(.+?)$"
+
+    Subject is a string. 
+    Capture is a list of the captures (empty if there is no capture groups).
+
+     - regex(Pattern,Subject)
+       True of the string Subject matches the regex Pattern.
+
+     - regex(Pattern,Subject,Capture)
+       True of the string Subject matches the regex Pattern. Also
+       the list Capture will contain the captures of the Pattern (if any).
+
+     - regex_compile(Pattern)
+       Compile (caches) the regex Pattern to be used with regex_match/2-3.
+       Note: as of now, this is a global pattern so one cannot cache
+       more than one pattern at each time. 
+
+     - regex_match(String)
+       regex_match(String,Capture)
+
+       Same as regex/2 and regex/3 respectively, except that it uses
+       the compiled pattern from regex_compile/1.
+
+     - regex_replace(Pattern,Replacement,Subject,Replaced)
+       Replaced = regex_replace(Pattern,Replacement,Subject)
+
+       Replace all occurrences of Pattern in the Subject with the 
+       string Replacement. The output is the string Replaced.
+       In Replacement one can use backreferences such as 
+       "$1", etc.
+
+       regex_replace2(Subject,Pattern,Replacement) = Replaced
+       This is a variant with the string Subject is in the first
+       position to simplify chaining of replacements. 
+
+       Here's a simple example of categorizing characters in vowels 
+       and consonants:
+       Picat> regex_replace2("picat programming","[aeiou]","V").regex_replace2("[^aeiouV ]","C")=X
+       X = ['C','V','C','V','C',' ','C','C','V','C','C','V','C','C','V','C','C']
+
+     % - regex_match_all(Pattern,Subject,Matches)
+     %   regex_match_all(Pattern,Subject) = Matches
+     %   regex_match_all/2-3 has been obsoleted by regex_find* since
+     %   it's slow and doesn't handle zero-width patterns etc.
+
+     - regex_find(Pattern,Subject,Capture)
+       regex_find(Pattern,Subject) = Capture
+
+       Find the first occurence of Pattern in Subject and
+       outputs it in Capture.
+     
+    - regex_find_all(Pattern,Subject,Matches)
+      regex_find_all(Pattern,Subject) = Matches
+
+      The list Matches contain all occurrences of Pattern in 
+      the string Subject.
+       
+       This tries to simulate Perl's 
+           while(!Pattern!gsm) {
+            # ...
+           }
+       
+       Note that for strings with newlines, the Pattern
+       should start with "(?s)" or "(?sm)" for matching newlines.
+
+    - regex_find_num(Pattern,Subject,Num,Matches)
+
+      The list Matches contains the first Num occurrences of Pattern in 
+      the string Subject.
+
+
+  * Flags
+    The program is compiled without any flags (except for regex_replace which replaces all occurrences).
+
+    The flags (that we all know and love from Perl) are the following 
+    from https://www.pcre.org/current/doc/html/pcre2pattern.html#internaloptions )
+
+      (?i)  for PCRE2_CASELESS
+      (?m)  for PCRE2_MULTILINE
+      (?n)  for PCRE2_NO_AUTO_CAPTURE
+      (?s)  for PCRE2_DOTALL
+      (?x)  for PCRE2_EXTENDED
+      (?xx) for PCRE2_EXTENDED_MORE
+
+    The flags can be combined, e.g. 
+      (?sm)
+    for combining PCRE2_MULTILINE and PCRE2_DOTALL.
+
+    Unsetting is done with "-", e.g. (?sx)
+    Setting and unsetting can also be done, e.g. (?im-sx).
+
+  * Quoting of backslashes.
+
+    '\' in backslash patterns must have an extra backslash. 
+    For example: "\s" must be written "\\s".
+
+
+  * Captures
+
+    The first element in Captures is the string from the first matched position
+    to the last matched position. The rest of the elements are the individual grouping 
+    captures (if any).
+
+    For example, in the call
+   
+      regex_match_capture("^(hakank?) was a Swedish (dancer|bassist|singer|dueller)$","hakan was a Swedish bassist",Captures3),
+    the Capture is 
+      [hakan was a Swedish bassist,hakan,bassist]
+    i.e. 
+      Capture[1] = "hakan was a Swedish bassist"
+      Capture[2] = "hakan"
+      Capture[3] = "bassist"
+
+    This can be confusing since often one wants to ignore the first "global" capture. 
+    One way might be enumerate the captured fields and ignore that capture, e.g.
+      regex_match_capture("^(hakank?) was a Swedish (dancer|bassist|singer|dueller)$",
+            "hakan was a Swedish bassist",[_, Who, What]),
+     -> 
+      Who = "hakan"
+      What = "bassist"
+
+
+    Npte:
+    To complicate the matter, the captures in regex_find/3 does not
+    have the first element as the full matched string; All[1] (or Capture[1])
+    is there the first matched group. This might be considered a feature...
+
+
+  This program was created by Hakan Kjellerstrand, hakank@gmail.com
+  See also my Picat page: http://www.hakank.org/picat/
+
+*/
+module regex.
+
+import util.
+
+/*
+  regex(Pattern,Subject)
+
+  True if the Subject matches Pattern.
+
+*/
+regex(Pattern,Subject) =>
+  bp.regex(Pattern,Subject).
+  % regex_find(Pattern,Subject,_).
+
+/*
+  regex(Pattern,Subject,Capture)
+
+  True if the Subject matches Pattern. 
+  The capture groups are collected in the list Capture.
+
+*/
+regex(Pattern,Subject,Capture) =>
+  bp.regex_capture(Pattern,Subject,Capture).
+  % regex_find(Pattern,Subject,Capture).  
+
+
+/*
+  regex_compile(Pattern)
+
+  Compiles the (global) pattern Pattern.
+  To be used with regex_match(Subject).
+
+*/
+regex_compile(Pattern) =>
+  bp.regex_compile(Pattern).
+
+
+/*
+  regex_match(Subject)
+
+  True if Subject matches the (global) pattern Pattern 
+  that was previously defined by regex_compile/1.
+
+*/
+regex_match(Subject) =>
+  bp.regex_match(Subject).
+
+
+/*
+  regex_match(Subject,Capture)
+
+  True if Subject matches the (global) pattern Pattern 
+  that was previously defined by regex_compile/1.
+  The capture group(s) are collected in the list Capture.
+
+  Note: The Capture is empty if there is no capture group.
+
+  The first element in the Capture list in bp.regex_match_capture/2 
+  is the string from the first matched position to the last.
+
+*/
+regex_match(Subject,Capture) =>
+  bp.regex_match_capture(Subject,Capture).
+
+
+/*
+  regex_replace(Pattern,Replacement,Subject,Replaced) 
+
+  Replaces all instances of pattern Pattern with Replacement
+  in Subject. The result string is in the output string Replaced.
+
+*/
+regex_replace(Pattern,Replacement,Subject,Replaced) =>
+  bp.regex_replace(Pattern,Replacement,Subject,Replaced).
+
+
+/*
+  regex_replace(Pattern,Replacement,Subject) = Replaced
+
+  This is a function version of regex_replace/4.
+
+  Replaces all instances of pattern Pattern with Replacement
+  in Subject. The result string is returned.
+
+*/
+regex_replace(Pattern,Replacement,Subject) = Replaced =>
+  bp.regex_replace(Pattern,Replacement,Subject,Replaced).
+
+
+/*
+  regex_replace2(Subject,Pattern,Replacement) = Replaced 
+
+  This is a variant of regex_replace/3 were the Subject string
+  is the first position. This makes chaining possible.
+
+*/
+regex_replace2(Subject,Pattern,Replacement) = Replaced =>
+  bp.regex_replace(Pattern,Replacement,Subject,Replaced).
+
+
+/*
+  Find all
+
+  Using the C API bp.regex_find_matches(Regex,String,NumSolutions,Matches)
+
+  Find all the occurrences pattern Pattern in a string.
+  The result is returned in the list Matches.
+
+  When there is no or only one capture then the
+  result is a simple list. When there are more than one
+  capture groups, then Matches is a list of lists.
+  Note that a string in Picat is a list of characters so
+  in some cases there is not difference between these cases
+  (see below, e.g. "(.)" and ".", and "(..)", "(.)(.)", "..")
+
+  For example:
+
+  Two characters in two different capture groups:
+  Picat> println(regex_find_all("(.)(.)","abcdef"))
+  [[a,b],[c,d],[e,f]]
+
+  Two characters in one capture group:
+  Picat> println(regex_find_all("(..)","abcdef"))
+  [ab,cd,ef]
+
+  One capture group and no capture group give the same result:
+  Picat> println(regex_find_all("(.)","abcdef"))
+  [a,b,c,d,e,f]
+  Picat> println(regex_find_all(".","abcdef"))    
+  [a,b,c,d,e,f]
+
+  Picat> println(regex_find_all("(?=(\\w+))","ABCDE"))
+  [ABCDE,BCDE,CDE,DE,E]
+
+  Picat> println(regex_find_all("(...)(...)(...)","abcdefghijklmnopq"))
+  [[abc,def,ghi]]
+
+*/
+
+
+/*
+  regex_find_all(Pattern,Subject,All)
+  regex_find_all(Pattern,Subject) = All
+
+  All contains all strings that matches Pattern.
+
+*/
+regex_find_all(Pattern,Subject,All) =>
+  bp.regex_find_matches(Pattern,Subject,0,All).
+
+regex_find_all(Pattern,Subject) = All =>
+  bp.regex_find_matches(Pattern,Subject,0,All).
+
+/*
+  regex_find_num(Pattern,Subject,Num,All)
+  regex_find_num(Pattern,Subject,Num) = All
+
+  All contains the first Num strings that matches Pattern.
+
+*/
+regex_find_num(Pattern,Subject,Num,Match) =>
+   bp.regex_find_matches(Pattern,Subject,Num,Match).
+
+regex_find_num(Pattern,Subject,Num) = All =>
+   bp.regex_find_matches(Pattern,Subject,Num,All).
+
+
+/*
+  regex_find(Pattern,Subject,Capture)
+  regex_find(Pattern,Subject) = Capture
+
+  The list Capture contains the first string that matches Pattern.
+
+  The difference between this and regex/3 and regex_match/2
+  is that for these two the_find Capture[1] is the full      
+  matched string, and then Capture[i>1] contains the i-1'th
+  match, while for regex_find/3 the returned list is just
+  the captures strings.
+
+*/
+regex_find(Pattern,Subject,Capture) =>
+  bp.regex_find_matches(Pattern,Subject,1,Capture1),
+  if Capture1.len > 0 then Capture = Capture1[1] else Capture = Capture1 end.
+
+regex_find(Pattern,Subject) = Capture =>
+  regex_find(Pattern,Subject,Capture).
+
+
+
+
+/*
+  EXPERIMENTAL (and OBSOLETE)
+
+  match_all(Pattern,Subject) = Matches
+
+  Note: This code is slower than the regex_find* family
+  and have some issues with e.g zero-width patterns.
+  I'll keep it for testing (or perhaps it's nostalgia? :-))
+
+  Matches all the occurrences pattern Pattern in a string.
+  The result is returned in the list Matches.
+
+  Note: The method assumes that the matched position moves 
+  forward (eats some character) in each iteration. 
+  For certain types of patterns, e.g. zero-width patterns, 
+  this fails and would loop forever. 
+  I'm trying to detect this and give the message
+    "Pattern does not increment, probably a zero-width pattern."
+  and stops the iteration.
+
+*/
+regex_match_all(Pattern,Subject,Matches) =>
+  Matches1 = [],
+  bp.regex_compile(Pattern), % compile regex for speed
+  Continue = true,
+  while (bp.regex_match_capture(Subject,Capture), Continue == true)
+    C = Capture[1], % Pick the full matched string
+    % We much have matched something, otherwise we stop.
+    if C.len == 0 then
+      println("regex_match_all: Pattern does not increment, probably a zero-width pattern."),
+      Continue := false
+      % C := Subject[1].to_string 
+    end,
+    Matches1 := Matches1 ++ [C],
+    once find(Subject,C,_From,To),
+    Subject := Subject[To+1..Subject.len]
+  end,
+  Matches = Matches1.
+
+% Function version of regex_match_all/3
+regex_match_all(Pattern,Subject) = Matches =>
+  regex_match_all(Pattern,Subject,Matches).
+  

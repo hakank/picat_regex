@@ -1,0 +1,391 @@
+/* 
+
+  Some other tests of the regex module in Picat.
+
+  Note: This requires the special regex/2 predicate compiled in (my) emu version.
+
+  For more about the support see the description in regex.pi
+  It's based on PCRE2: https://www.pcre.org/current/doc/html/index.html
+
+  Especially interesting are probably these pages:
+  - pcre2pattern: https://www.pcre.org/current/doc/html/pcre2pattern.html
+  - pcre2syntax: https://www.pcre.org/current/doc/html/pcre2syntax.html
+  - pcre2perform: https://www.pcre.org/current/doc/html/pcre2perform.html
+
+  For more information and examples regarding regexes see for example:
+  - https://www.rexegg.com/ 
+    Here's an overview of operators and symbols:  
+      https://www.rexegg.com/regex-quickstart.html
+  - https://www.regular-expressions.info/
+
+  Also see:
+  https://en.wikipedia.org/wiki/Regular_expression
+
+
+
+  This Picat model was created by Hakan Kjellerstrand, hakank@gmail.com
+  See also my Picat page: http://www.hakank.org/picat/
+
+*/
+
+
+import util,regex.
+
+main => go.
+
+
+go =>
+  garbage_collect(200_000_000),
+  Words = read_file_lines("words_lower.txt"),  
+  regex_compile("a.*b.*c.*d.*e"),
+  foreach(Word in Words)
+    if regex_match(Word,Capture) then
+       println(matches=Word=Capture)
+    end
+  end,
+  println(ok),
+  nl.
+
+%
+% Using regex/2: 7.877s
+%
+go2 =>
+   garbage_collect(200_000_000),
+   Words = read_file_lines("words_lower.txt"),
+   % Words = read_file_lines("/usr/share/dict/words"),
+   println(num_words=Words.len),
+   Alpha = lower(),
+   println(alpha=Alpha),
+   Len = 5,
+   AllMatch = [],
+   Patterns = [ [Alpha[J].to_string() : J in I..I+Len-1].join("|").replace('|',".*").flatten() : I in 1..Alpha.length-Len+1],
+   foreach(Pattern in Patterns) 
+      println(pattern=Pattern),
+      % Match = [Word : Word in Words,println(Word),regex(Pattern,Word),println(Word)], % 3.037
+      Match = [Word : Word in Words,regex(Pattern,Word)], % 3.037      
+      println(Match),
+      println(len=Match.length),
+      if Match.length > 0 then
+         AllMatch := AllMatch ++ [[Match.length,Pattern]]
+      end,
+      nl        
+   end,
+   
+   println(AllMatch.sort_down()),
+
+   nl.
+
+%
+% Using regex_compile and bp_regex_match:
+% Faster by a factor of about 3: 1.674s
+%
+go3 =>
+   garbage_collect(200_000_000),
+   Len = 5,   
+   Words = read_file_lines("words_lower.txt"),
+   % Words = read_file_lines("/usr/share/dict/words"),
+   println(num_words=Words.len),
+   Alpha = lower(),
+   println(alpha=Alpha),
+
+   AllMatch = [],
+   Patterns = [ [ Alpha[J].to_string() : J in I..I+Len-1].join("|").replace('|',".*").flatten() : I in 1..Alpha.length-Len+1],
+   foreach(Pattern in Patterns) 
+      println(pattern=Pattern),
+      regex_compile(Pattern), % compile the pattern 
+      Match = [Word : Word in Words,regex_match(Word)], % match the compiled pattern: 3.672s
+      println(Match),
+      println(len=Match.length),
+      if Match.length > 0 then
+         AllMatch := AllMatch ++ [[Match.length,Pattern]]
+      end,
+      nl        
+   end,
+
+   println(AllMatch.sort_down()),
+
+   nl.
+
+
+/*
+
+  Defining subroutines.
+  See https://www.rexegg.com/regex-disambiguation.html#define
+
+  Note: using (?(DEFINE) ... ) requires the option PCRE2_EXTENDED (?x) (or (?xx)), 
+  which is thus prepended to the regex.
+
+  And just for fun, let's create a DCG (s/2) that generates all the 
+  possible strings so we can test the regex.
+
+  There are 2187 possible strings. Here's some of the first:
+
+  many blue cars borrow many blue cars = ok
+  many blue cars borrow many blue elephants = ok
+  many blue cars borrow many blue problems = ok
+  many blue cars borrow many large cars = ok
+  many blue cars borrow many large elephants = ok
+  many blue cars borrow many large problems = ok
+  many blue cars borrow many interesting cars = ok
+  many blue cars borrow many interesting elephants = ok
+  many blue cars borrow many interesting problems = ok
+  many blue cars borrow some blue cars = ok
+  ...
+
+*/
+go4 =>
+  Regex = "(?x)(?(DEFINE)  # start DEFINE block
+  # pre-define quant subroutine 
+  (?<quant>many|some|five)
+
+  # pre-define adj subroutine
+  (?<adj>blue|large|interesting)                   
+
+  # pre-define object subroutine
+  (?<object>cars|elephants|problems)                
+
+  # pre-define noun_phrase subroutine
+  (?<noun_phrase>(?&quant)\\ (?&adj)\\ (?&object))   
+
+  # pre-define verb subroutine
+  (?<verb>borrow|solve|resemble)
+) 
+
+##### The regex matching starts here #####
+(?&noun_phrase)\\ (?&verb)\\ (?&noun_phrase)",
+
+  % String = "five blue elephants solve many interesting problems",
+  s(String,[]), % generate the string
+  if regex(Regex,String) then
+    println(String=ok)
+  else
+    println(String=not_ok)
+  end,
+  fail,
+  nl.
+
+
+% From https://www.rexegg.com/
+% -> 42
+go5 =>
+  member(N,1..1000),
+  regex("^(?=(?!(.)\\1)([^\\DO:105-93+30])(?-1)(?<!\\d(?<=(?![5-90-3])\\d))).[^\\WHY?]$",N.to_string),
+  println(N),
+  fail,
+  nl.
+
+
+/* 
+
+  Validating email address.
+  From https://www.rexegg.com/regex-uses.html
+  Also DCG variants (email_check/2, name/2, company/2, org/2) of this.
+
+  Note that in the generation of the "email", I added some illegal characters, 
+  such as "?" in the name,  "_" in the company name and an orgnisation of length 1..7 
+  (instead of 2..6).
+
+  An example run:
+  [hakank@gmail.com]
+
+  Testing random strings
+  9y9Eg48@VfEhdTpcdS.y = not_ok
+  9y9Eg48@VfEhdTpcdS.y = dcg_not_ok
+
+  ggl_m-0@Xdv_Xwq.SOEXY = not_ok
+  ggl_m-0@Xdv_Xwq.SOEXY = dcg_not_ok
+
+  AklAax-@sLMHI.lyXi = ok
+  AklAax-@sLMHI.lyXi = dcg_ok
+
+  a9+kotmbWH@mMtSsRpMr.xJ = ok
+  a9+kotmbWH@mMtSsRpMr.xJ = dcg_ok
+
+  7BLY4pv@iDiRAsmbd.oPi = ok
+  7BLY4pv@iDiRAsmbd.oPi = dcg_ok
+
+  A4i6_1JF@FzssrO.gXuoNUl = not_ok
+  A4i6_1JF@FzssrO.gXuoNUl = dcg_not_ok
+
+  ?-CX66gy2@TEVthjDlgA.U = not_ok
+  ?-CX66gy2@TEVthjDlgA.U = dcg_not_ok
+
+  PUGE2@rqKkod._inJxM = not_ok
+  PUGE2@rqKkod._inJxM = dcg_not_ok
+
+  3sVFR6uH@LIjLDVy.R = not_ok
+  3sVFR6uH@LIjLDVy.R = dcg_not_ok
+
+  7Byajqqod3@iwrhBiX.zTIMb = ok
+  7Byajqqod3@iwrhBiX.zTIMb = dcg_ok
+
+
+*/
+go6 =>
+  email_regex(Regex),
+  regex(Regex,"hakank@gmail.com",Capture),
+  println(Capture),
+
+  % Test of some random strings
+  println("\nTesting random strings"),
+  _ = random2(),
+  OK = [],
+  NotOK = [],
+  foreach(_ in 1..10)
+    % Split the generation of the different parts
+    % to make it easier to get some larger lengths of
+    % each part and to make bad examples (in org/2).
+    bp.length(Name,random(5,10)),    name(Name,[]),
+    bp.length(Company,random(5,10)), company(Company,[]),
+    bp.length(Org,random(1,7)),      org(Org,[]),
+    Email = Name ++ "@" ++ Company ++ "." ++ Org,
+    if regex(Regex,Email) then
+      println(Email=ok),
+      OK := OK ++ [Email]
+    else
+      println(Email=not_ok),
+      NotOK := NotOK ++ [Email]
+    end,
+    if email_check(Email,[]) then
+      println(Email=dcg_ok)
+    else
+      println(Email=dcg_not_ok)
+    end,
+    nl 
+  end,
+  nl,
+  % println(ok=OK),
+  println(not_ok=NotOK),
+  nl.
+
+/*
+  Just to show how boring the email_check/2 is for generating email addresses:
+  a@a.aa = ok
+  a@a.ab = ok
+  a@a.ac = ok
+  a@a.ad = ok
+  a@a.ae = ok
+  a@a.af = ok
+  a@a.ag = ok
+  a@a.ah = ok
+  a@a.ai = ok
+  ...
+*/
+go6b =>
+   email_regex(Regex),
+   email_check(Email,[]),
+   if regex(Regex,Email) then
+     println(Email=ok)
+   else
+      println(Email=not_ok)
+   end,
+   fail.
+
+
+% For go2/0 and go3/0
+lower() = [chr(I+96) : I in 1..26].
+upper() = [chr(I+64) : I in 1..26].
+lower_swe() = [chr(I+96) : I in 1..26] ++ "åäö".
+
+% DCG for go4/0.
+s      --> noun_phrase, " ", verb, " ", noun_phrase.
+quant  --> "many" ; "some" ; "five".
+adj    --> "blue" ; "large" ; "interesting".
+object --> "cars" ; "elephants" ; "problems".
+verb   --> "borrow" ; "solve" ; "resemble".
+noun_phrase --> quant, " ", adj, " ", object.
+
+/* 
+  Email regex for go6/0 and go6b/0.
+  Note: I changed the boundary checks (\b) with ^ and $, since we are testing a string that is
+  supposedly an email address. 
+*/
+email_regex(Regex) =>
+  Regex = "(?ix)(   # Turn on case-insensitive mode
+# \\b               # Position engine at a word boundary
+^                   # hakank: added ^ instead of \\b
+
+[A-Z0-9._%+-]+      # Match one or more of the characters between brackets: letters, 
+                    # numbers, dot, underscore, percent, plus, minus. Yes, some 
+                    # of these are rare in an email address.
+
+@                   # Match @
+
+(?:[A-Z0-9-]+\\.)+  # Match one or more strings followed by a dot, such strings being made 
+                    # of letters, numbers and hyphens. These are the domains and sub-domains, 
+                    # such as post. and microsoft. in post.microsoft.com
+
+[A-Z]{2,6}          # Match two to six letters, for instance US, COM, INFO. This is meant 
+                    # to be the top-level domain. Yes, this also matches DOG. You have 
+                    # to decide if you want achieve razor precision, at the cost of needing 
+                    # to maintain your regex when new TLDs are introduced.
+
+)$                   # hakank: Added $ instead  
+# \\b               # Match a word boundary".
+
+%
+% Generating random email addresses
+%
+% email_gener --> name, "@", company, ".", org.
+% Added invalid "?" in name chars
+name_char --> [C], {C = oneof("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.%+-?")}.
+name_chars --> name_char ; (name_char, name_chars).
+name --> name_chars.
+name --> "".
+% Added invalid "_" for company name
+company_char --> [C], { C=oneof("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY._")}.
+company_chars --> company_char ; (company_char, company_chars).
+company --> company_chars.
+company --> "".
+% Added invalid "_" to org
+org_char --> [C], { C=oneof("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_")}.
+org_chars --> org_char ; (org_char, org_chars).
+org --> org_chars.
+org --> "".
+
+% 
+% DCG version for validation of email addresses.
+%
+% It's basically the same as the generating variant, with some differences:
+%  - using member/2 instead of oneof/1
+%  - we restrict the number of chars in org2 to 2..6 chars by enumerating the
+%    cases.
+%
+% email_test/2 _can_ be used for the generation of the email addresses but it's quite boring:
+% Picat> email_check(X,[])
+% X = [a,'@',a,'.',a,a] ?;
+% X = [a,'@',a,'.',a,b] ?;
+% X = [a,'@',a,'.',a,c] ?;
+% X = [a,'@',a,'.',a,d] ?;
+% X = [a,'@',a,'.',a,e] ?;
+% X = [a,'@',a,'.',a,f] ?;
+% X = [a,'@',a,'.',a,g] ?;
+% X = [a,'@',a,'.',a,h] ?
+% (See go9b/0 for a full generation of these.)
+%
+% Though this might be of some use for some systematic testing of all
+% possible email addresses (given these constraints).
+% 
+email_check --> name2, "@", company2, ".", org2.
+name_char2 --> [C], {member(C,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.%+-")}.
+name_chars2 --> name_char2 ; (name_char2, name_chars2).
+name2 --> name_chars2.
+name2 --> "".
+company_char2 --> [C], {member(C,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY.")}.
+company_chars2 --> company_char2 ; (company_char2, company_chars2).
+company2 --> company_chars2.
+company2 --> "".
+org_char2 --> [C], {member(C,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")}.
+org_chars2 --> org_char2 ; (org_char2, org_chars2).
+org2 -->  (org_char2, org_char2) ;
+          (org_char2, org_char2, org_char2) ;
+          (org_char2, org_char2, org_char2, org_char2) ;
+          (org_char2, org_char2, org_char2, org_char2, org_char2) ;
+          (org_char2, org_char2, org_char2, org_char2, org_char2, org_char2).
+
+
+% For go6/0
+oneof(L) = E =>
+  L != [],
+  E = L[random(1,L.length)].
+  
