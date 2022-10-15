@@ -1,5 +1,5 @@
 # picat_regex
-regex module for Picat
+regex module for Picat (http://picat-lang,org).
 
 This is an experimental module for handling regexes in Picat (requres Picat v3.3#3 or higher).
 
@@ -277,3 +277,7 @@ The Picat definitions in lib/regex.pi calls the C function written in emu/bp_pcr
 - bp.regex_match_capture(Subject,Capture)
 - bp.regex_replace(Pattern,Replacement,Subject,Replaced)
 - bp.regex_find_matches(Pattern,Subject,Num,Matched).
+
+
+# Picat
+For more about Picat see http://picat-lang.org and my Picat page: http://hakank.org/picat/
