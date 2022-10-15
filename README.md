@@ -17,6 +17,10 @@ For more information and examples regarding regexes see for example:
 
 This regex module does not cover the complete PCRE2 API, far from it. Instead it containts some few predicates/functions, mainly taken from my own use cases of regular expressions from my experience as a long time Perl programmer.
 
+Some initial notes:
+* I have only tested this on a Linux Ubuntu 20.04.
+* As you might see in emu/bp_pcre2.c, I am a C programmer (there is a reason why I prefer VHLL programming languages).
+
 
 ## Files:
 The files in this repo are:
