@@ -1,7 +1,7 @@
 # picat_regex
-regex module for Picat
+regex module for Picat (http://picat-lang,org).
 
-This is an experimental module for handling regexes in Picat.
+This is an experimental module for handling regexes in Picat (requres Picat v3.3#3 or higher).
 
 It is a interface to PCRE2 (https://www.pcre.org/current/doc/html/index.html) with some selected functionality.
 Especially interesting are probably these pages:
@@ -80,7 +80,8 @@ Some other regex related programs which does not require the regex module but I 
 
 ## Compiling and testing
 
-The regex module has been developed on a Linux Ubuntu 20.04 system. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat34_.tar.gz).
+The regex module has been developed on a Linux Ubuntu 20.04 system using Picat version v3.3#3 and v3.4. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat34_.tar.gz).
+
 
 * Unpack the contents for the picat *.tar.gz in a directory, say `/home/hakank/picat`.
 
@@ -290,3 +291,7 @@ The Picat definitions in lib/regex.pi calls the C function written in emu/bp_pcr
 - bp.regex_match_capture(Subject,Capture)
 - bp.regex_replace(Pattern,Replacement,Subject,Replaced)
 - bp.regex_find_matches(Pattern,Subject,Num,Matched).
+
+
+# Picat
+For more about Picat see http://picat-lang.org and my Picat page: http://hakank.org/picat/
