@@ -266,6 +266,7 @@ int regex_compile() {
 } // regex_compile
 
 
+
 /*
   regex_match/2: regex_capture(Subject)
 
@@ -317,7 +318,6 @@ int regex_match() {
 
 } // regex_match
  
-
 
 /*
   regex_match_capture/2: regex_capture(Subject,Capture)
@@ -491,6 +491,94 @@ int regex_replace() {
   return PICAT_FALSE;
   
 } // regex_replace
+
+
+int regex_replace_first() {
+
+  TERM pattern_p = picat_get_call_arg(1,4);  
+  TERM replacement_p = picat_get_call_arg(2,4);
+  TERM subject_p = picat_get_call_arg(3,4);
+  TERM result_p = picat_get_call_arg(4,4);
+
+ 
+  char* pattern_s = picat_string_to_cstring(pattern_p);
+  char* replacement_s = picat_string_to_cstring(replacement_p);
+  char* subject_s = picat_string_to_cstring(subject_p);
+  
+  int output_size_int = strlen(subject_s);
+ 
+  size_t subject_length = strlen((char *)subject_s);
+  size_t replacement_length = strlen((char *)replacement_s);
+ 
+  int errornumber;
+  PCRE2_SIZE erroroffset;
+  long signed int compile_options = PCRE2_ZERO_TERMINATED;
+  pcre2_code *re = pcre2_compile(pattern_s, compile_options, 0, &errornumber, &erroroffset, NULL);
+  if (re == NULL) {
+    PCRE2_UCHAR buffer[256];
+    pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
+    printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
+
+    free(pattern_s);
+    free(replacement_s);  
+    free(subject_s);
+
+    return PICAT_FALSE;
+  }
+
+  // The initial output size might not be enough so we
+  // might have to increase the output buffer.
+  int output_mult = 1; // times the original output_size
+  while (1) {
+    int output_size_to_use = output_size_int*output_mult;
+    // PCRE2_UCHAR output[output_size_to_use];
+    PCRE2_UCHAR *output;
+    output = malloc(output_size_to_use * sizeof(PCRE2_UCHAR));
+    strcpy(output,"");
+
+    PCRE2_SIZE outlen = output_size_to_use; // sizeof(output) / sizeof(PCRE2_UCHAR);
+    // Note: pcre2_substitute adjusts the outlen.
+    int rc = pcre2_substitute(re, subject_s, subject_length, 0,
+                              PCRE2_SUBSTITUTE_OVERFLOW_LENGTH,
+                              NULL, NULL,
+                              replacement_s, replacement_length, output, &outlen);
+    
+    if (rc == PCRE2_ERROR_NOMEMORY) {
+      // Increase the size of the output buffer and check again.
+      output_mult *= 2;
+      free(output);
+      // printf("output_mult: %d new size: %d\n",output_mult, output_size_to_use);
+      
+    } else if(rc < 0) {
+      // Some error
+      PCRE2_UCHAR error_buffer[256];
+      pcre2_get_error_message(rc, error_buffer, sizeof(error_buffer));
+      printf("PCRE2 substitute error (rc:%d): %s\n", (int)rc, error_buffer);
+      
+      free(pattern_s);
+      free(replacement_s);  
+      free(subject_s);
+      free(output);
+      
+      return PICAT_FALSE;
+      
+    } else {
+
+      picat_unify(result_p,cstring_to_picat((char *)output, strlen(output)));  
+      
+      free(pattern_s);
+      free(replacement_s);  
+      free(subject_s);
+      free(output);
+      
+      return PICAT_TRUE;
+    }
+
+  }
+
+  return PICAT_FALSE;
+  
+} // regex_replace_first
 
 
 /* 

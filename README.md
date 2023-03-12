@@ -19,7 +19,7 @@ This regex module does not cover the complete PCRE2 API, far from it. Instead it
 
 Some initial notes:
 * I have only tested this on a Linux Ubuntu 20.04.
-* As you might see in emu/bp_pcre2.c, I am a C programmer (there is a reason why I prefer VHLL programming languages).
+* As you might see in emu/bp_pcre2.c, I am not a C programmer (there is a reason why I prefer VHLL programming languages).
 
 
 ## Files:
@@ -37,6 +37,8 @@ The files in this repo are:
 - emu/picat_utilities.h
 
   This is needed for Picat v3.3#3 since the current file is not correct in the defintion of `cstring_to_picat(char* ch_ptr)`. It should be `cstring_to_picat(char* ch_ptr, int n)`). This should be fixed for later versions.
+  
+  Note: This is fixed in Picat v3.4.
   
 - emu/test_regex.pi
 
@@ -78,11 +80,13 @@ Some other regex related programs which does not require the regex module but I 
 
 ## Compiling and testing
 
-The regex module has been developed on a Linux Ubuntu 20.04 system. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat333.tar.gz).
+The regex module has been developed on a Linux Ubuntu 20.04 system. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat34_.tar.gz).
 
 * Unpack the contents for the picat *.tar.gz in a directory, say `/home/hakank/picat`.
 
 * Copy the files in this repo's directories `lib` and `emu` to the corresponding directories in the newly created directory (`/home/hakank/picat/lib`, `/home/hakank/picat/emu/`.
+
+  Note: If you have used an earlier version of regex.pi, it's recommended that you remove the previously generated regex.qi before testing.
 
 * Ensure that the pcre2-8 library is installed.
 
@@ -192,6 +196,15 @@ Here are the functions/predicates:
   Picat> regex_replace2("picat programming","[aeiou]","V").regex_replace2("[^aeiouV ]","C")=X
   X = ['C','V','C','V','C',' ','C','C','V','C','C','V','C','C','V','C','C']
   ```
+
+- `regex_replace_first(Pattern,Replacement,Subject,Replaced)`
+  `Replaced = regex_replace_first(Pattern,Replacement,Subject)`
+
+   Replaces the _first_ occurrence of Pattern in the Subject with the  string Replacement. The output is the string Replaced. In Replacement one can use backreferences such as  "$1", etc.
+
+- `regex_replace_first2(Subject,Pattern,Replacement) = Replaced`
+  This is a variant with the string Subject is in the first position to simplify chaining of replacements. 
+
 
 - `regex_find(Pattern,Subject,Captures)`
   `regex_find(Pattern,Subject) = Captures`

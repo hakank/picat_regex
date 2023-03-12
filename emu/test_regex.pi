@@ -126,7 +126,13 @@ go =>
   % The backreference \\g1 is the same as \\1
   regex_replace("(.+?) \\g1","$1","The author thinks thinks that that.",Replaced2b),
   println(replaced2b=Replaced2b), % "The author thinks that."
-  
+
+  % The backreference \\g1 is the same as \\1
+  % Replaces only the first match, i.e. "thinks thinks".
+  regex_replace_first("(.+?) \\g1","$1","The author thinks thinks that that.",ReplacedFirst2),
+  println(replacedFirst2=ReplacedFirst2), % "The author thinks that that."
+
+
   regex_replace("(\\d+)","[:digit:]+","123abc456xyz7",Replaced3),
   println(replaced3=Replaced3), %  "[:digit:]+abc[:digit:]+xyz[:digit:]+"
   

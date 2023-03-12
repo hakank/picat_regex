@@ -77,6 +77,19 @@
      %   regex_match_all/2-3 has been obsoleted by regex_find* since
      %   it's slow and doesn't handle zero-width patterns etc.
 
+     - regex_replace_first(Pattern,Replacement,Subject,Replaced)
+       Replaced = regex_replace_first2(Pattern,Replacement,Subject)
+
+       Replaces the first occurrence of Pattern in the Subject with the 
+       string Replacement. The output is the string Replaced.
+       In Replacement one can use backreferences such as 
+       "$1", etc.
+
+       regex_replace_first2(Subject,Pattern,Replacement) = Replaced
+       This is a variant with the string Subject is in the first
+       position to simplify chaining of replacements. 
+
+
      - regex_find(Pattern,Subject,Capture)
        regex_find(Pattern,Subject) = Capture
 
@@ -239,7 +252,6 @@ regex_match(Subject,Capture) =>
 regex_replace(Pattern,Replacement,Subject,Replaced) =>
   bp.regex_replace(Pattern,Replacement,Subject,Replaced).
 
-
 /*
   regex_replace(Pattern,Replacement,Subject) = Replaced
 
@@ -253,6 +265,7 @@ regex_replace(Pattern,Replacement,Subject) = Replaced =>
   bp.regex_replace(Pattern,Replacement,Subject,Replaced).
 
 
+
 /*
   regex_replace2(Subject,Pattern,Replacement) = Replaced 
 
@@ -262,6 +275,41 @@ regex_replace(Pattern,Replacement,Subject) = Replaced =>
 */
 regex_replace2(Subject,Pattern,Replacement) = Replaced =>
   bp.regex_replace(Pattern,Replacement,Subject,Replaced).
+
+
+/*
+  regex_replace_first(Pattern,Replacement,Subject,Replaced) 
+
+  Replaces the first instance of pattern Pattern with Replacement
+  in Subject. The result string is in the output string Replaced.
+
+*/
+regex_replace_first(Pattern,Replacement,Subject,Replaced) =>
+  bp.regex_replace_first(Pattern,Replacement,Subject,Replaced).
+
+/*
+  regex_replace_first(Pattern,Replacement,Subject) = Replaced
+
+  This is a function version of regex_replace/4.
+
+  Replaces the first instance of pattern Pattern with Replacement
+  in Subject. The result string is returned.
+
+*/
+regex_replace_first(Pattern,Replacement,Subject) = Replaced =>
+  bp.regex_replace_first(Pattern,Replacement,Subject,Replaced).
+
+
+
+/*
+  regex_replace_first2(Subject,Pattern,Replacement) = Replaced 
+
+  This is a variant of regex_replace/3 were the Subject string
+  is the first position. This makes chaining possible.
+
+*/
+regex_replace_first2(Subject,Pattern,Replacement) = Replaced =>
+  bp.regex_replace_first(Pattern,Replacement,Subject,Replaced).
 
 
 /*

@@ -1,6 +1,6 @@
 /********************************************************************
  *   File   : cpreds.c
- *   Author : Neng-Fa ZHOU Copyright (C) 1994-2022
+ *   Author : Neng-Fa ZHOU Copyright (C) 1994-2023
  *   Purpose: Non-inline built-ins in C
 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -27,7 +27,9 @@ extern int regex_compile(); // hakank
 extern int regex_match(); // hakank
 extern int regex_match_capture(); // hakank
 extern int regex_replace(); // hakank
+extern int regex_replace_first(); // hakank
 extern int regex_find_matches(); // hakank
+
 
 /* this function is by Steve Branch */
 int bp_signal(int signo, void user_signal_handler(int, void *), void *userdata)
@@ -1260,21 +1262,19 @@ void Cboot() {
     fann_cpreds();
 #endif
     //  Cboot_TP();
-    
+
     // PCRE2: hakank
-   insert_cpred("regex",2,regex);
-   insert_cpred("regex_capture",3,regex_capture);
-   insert_cpred("regex_compile",1,regex_compile);
-   insert_cpred("regex_match",1,regex_match);
-   insert_cpred("regex_match_capture",2,regex_match_capture); 
-   insert_cpred("regex_replace",4,regex_replace);
-   insert_cpred("regex_find_matches",4,regex_find_matches);   
+    insert_cpred("regex",2,regex);
+    insert_cpred("regex_capture",3,regex_capture);
+    insert_cpred("regex_compile",1,regex_compile);
+    insert_cpred("regex_match",1,regex_match);
+    insert_cpred("regex_match_capture",2,regex_match_capture); 
+    insert_cpred("regex_replace",4,regex_replace);
+    insert_cpred("regex_replace_first",4,regex_replace_first);   
+    insert_cpred("regex_find_matches",4,regex_find_matches);   
 
-
+    
 }
-
-
-
 
 /* by S. Branch */
 /*
