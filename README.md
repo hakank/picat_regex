@@ -34,11 +34,7 @@ The files in this repo are:
   
 - emu/Makefile.linux64_pcre2
 
-- emu/picat_utilities.h
-
-  This is needed for Picat v3.3#3 since the current file is not correct in the defintion of `cstring_to_picat(char* ch_ptr)`. It should be `cstring_to_picat(char* ch_ptr, int n)`). This should be fixed for later versions.
-  
-  Note: This is fixed in Picat v3.4.
+  Makefile for the Linux version of Picat.
   
 - emu/test_regex.pi
 
@@ -80,8 +76,7 @@ Some other regex related programs which does not require the regex module but I 
 
 ## Compiling and testing
 
-The regex module has been developed on a Linux Ubuntu 20.04 system using Picat version v3.3#3 and v3.4. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat34_.tar.gz).
-
+The regex module has been developed on a Linux Ubuntu 20.04 system using Picat version v3.7. To compile it you need the C source code for Picat, available at http://picat-lang.org/download.html (named picatnn.tar.gz, e.g. picat37_*.tar.gz).
 
 * Unpack the contents for the picat *.tar.gz in a directory, say `/home/hakank/picat`.
 
@@ -103,7 +98,7 @@ The regex module has been developed on a Linux Ubuntu 20.04 system using Picat v
     
      ```
      $ cd emu
-     $ make -f Makefile.linux64_pcre2
+     $ time sh make_picat_scip_linux
      ```
      
    The Picat executable picat is now created (if no errors occurred) in this directory.
