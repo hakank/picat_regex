@@ -1,6 +1,6 @@
 /********************************************************************
  *   File   : cpreds.c
- *   Author : Neng-Fa ZHOU Copyright (C) 1994-2023
+ *   Author : Neng-Fa ZHOU Copyright (C) 1994-2024
  *   Purpose: Non-inline built-ins in C
 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,6 +29,7 @@ extern int regex_match_capture(); // hakank
 extern int regex_replace(); // hakank
 extern int regex_replace_first(); // hakank
 extern int regex_find_matches(); // hakank
+
 
 
 /* this function is by Steve Branch */
@@ -80,9 +81,7 @@ BPLONG bp_build_address(void *address) {
     return temp;
 }
 
-int identical_VAR_VAR(t1, t2)
-    BPLONG t1;
-    BPLONG t2;
+int identical_VAR_VAR(BPLONG t1, BPLONG t2)
 {
     BPLONG_PTR top;
     DEREF(t1);
@@ -90,44 +89,38 @@ int identical_VAR_VAR(t1, t2)
     return t1 == t2;
 }
 
-BPLONG bp_get_call_arg(i, arity)
-    BPLONG i, arity;
+BPLONG bp_get_call_arg(BPLONG i, BPLONG arity)
 {
     return ARG(i, arity);
 }
 
-BPLONG picat_get_call_arg(i, arity)
-    BPLONG i, arity;
+BPLONG picat_get_call_arg(BPLONG i, BPLONG arity)
 {
     return ARG(i, arity);
 }
 
-int bp_is_var(t)
-    BPLONG t;
+int bp_is_var(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISREF(t);
 }
 
-int picat_is_var(t)
-    BPLONG t;
+int picat_is_var(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISREF(t);
 }
 
-int picat_is_attr_var(t)
-    BPLONG t;
+int picat_is_attr_var(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return IS_SUSP_VAR(t);
 }
 
-int picat_is_dvar(t)
-    BPLONG t;
+int picat_is_dvar(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -138,8 +131,7 @@ int picat_is_dvar(t)
     return BP_FALSE;
 }
 
-int picat_is_bool_dvar(t)
-    BPLONG t;
+int picat_is_bool_dvar(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -153,100 +145,87 @@ int picat_is_bool_dvar(t)
     return BP_FALSE;
 }
 
-int bp_is_atom(t)
-    BPLONG t;
+int bp_is_atom(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISATOM(t);
 }
 
-int picat_is_atom(t)
-    BPLONG t;
+int picat_is_atom(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISATOM(t);
 }
 
-int bp_is_integer(t)
-    BPLONG t;
+int bp_is_integer(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return (ISINT(t) || IS_BIGINT(t));
 }
 
-int picat_is_integer(t)
-    BPLONG t;
+int picat_is_integer(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return (ISINT(t) || IS_BIGINT(t));
 }
 
-int bp_is_float(t)
-    BPLONG t;
+int bp_is_float(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISFLOAT(t);
 }
 
-int picat_is_float(t)
-    BPLONG t;
+int picat_is_float(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISFLOAT(t);
 }
 
-int bp_is_nil(t)
-    BPLONG t;
+int bp_is_nil(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISNIL(t);
 }
 
-int picat_is_nil(t)
-    BPLONG t;
+int picat_is_nil(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISNIL(t);
 }
 
-int bp_is_list(t)
-    BPLONG t;
+int bp_is_list(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISLIST(t);
 }
 
-int picat_is_list(t)
-    BPLONG t;
+int picat_is_list(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return ISLIST(t);
 }
 
-int picat_is_string(t)
-    BPLONG t;
+int picat_is_string(BPLONG t)
 {
     return b_IS_STRING_c(t);
 }
 
-int bp_is_structure(t)
-    BPLONG t;
+int bp_is_structure(BPLONG t)
 {
     return picat_is_structure(t);
 }
 
-int picat_is_structure(t)
-    BPLONG t;
+int picat_is_structure(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -259,59 +238,50 @@ int picat_is_structure(t)
     return BP_FALSE;
 }
 
-int bp_is_compound(t)
-    BPLONG t;
+int bp_is_compound(BPLONG t)
 {
     return picat_is_compound(t);
 }
 
-int picat_is_compound(t)
-    BPLONG t;
+int picat_is_compound(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
     return (bp_is_list(t) || bp_is_structure(t));
 }
 
-int picat_is_array(t)
-    BPLONG t;
+int picat_is_array(BPLONG t)
 {
     return b_IS_ARRAY_c(t);
 }
 
-int bp_is_unifiable(t1, t2)
-    BPLONG t1, t2;
+int bp_is_unifiable(BPLONG t1, BPLONG t2)
 {
     return is_UNIFIABLE(t1, t2);
 }
 
-int picat_is_unifiable(t1, t2)
-    BPLONG t1, t2;
+int picat_is_unifiable(BPLONG t1, BPLONG t2)
 {
     return is_UNIFIABLE(t1, t2);
 }
 
-int bp_is_identical(t1, t2)
-    BPLONG t1, t2;
+int bp_is_identical(BPLONG t1, BPLONG t2)
 {
     return is_IDENTICAL(t1, t2);
 }
 
-int picat_is_identical(t1, t2)
-    BPLONG t1, t2;
+int picat_is_identical(BPLONG t1, BPLONG t2)
 {
     return is_IDENTICAL(t1, t2);
 }
 
 /**/
-long bp_get_integer(t)
-    BPLONG t;
+long bp_get_integer(BPLONG t)
 {
     return picat_get_integer(t) ;
 }
 
-BPLONG picat_get_integer(t)
-    BPLONG t;
+BPLONG picat_get_integer(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -325,16 +295,15 @@ BPLONG picat_get_integer(t)
         bp_exception = integer_expected;
         return 0;
     }
+    return 0; // unreachable
 }
 
-double bp_get_float(t)
-    BPLONG t;
+double bp_get_float(BPLONG t)
 {
     return picat_get_float(t);
 }
 
-double picat_get_float(t)
-    BPLONG t;
+double picat_get_float(BPLONG t)
 {
     BPLONG_PTR top;
 
@@ -349,8 +318,7 @@ double picat_get_float(t)
     }
 }
 
-char *picat_get_name(t)
-    BPLONG t;
+char *picat_get_name(BPLONG t)
 {
     DEREF(t);
     if (ISATOM(t)) {
@@ -360,14 +328,12 @@ char *picat_get_name(t)
     }
 }
 
-char *bp_get_name(t)
-    BPLONG t;
+char *bp_get_name(BPLONG t)
 {
     return picat_get_name(t);
 }
 
-char *picat_get_struct_name(t)
-    BPLONG t;
+char *picat_get_struct_name(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -379,14 +345,12 @@ char *picat_get_struct_name(t)
     }
 }
 
-char *bp_get_struct_name(t)
-    BPLONG t;
+char *bp_get_struct_name(BPLONG t)
 {
     return picat_get_struct_name(t);
 }
 
-int picat_get_struct_arity(t)
-    BPLONG t;
+int picat_get_struct_arity(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -404,14 +368,12 @@ int picat_get_struct_arity(t)
     }
 }
 
-int bp_get_struct_arity(t)
-    BPLONG t;
+int bp_get_struct_arity(BPLONG t)
 {
     return picat_get_struct_arity(t);
 }
 
-char *picat_get_atom_name(t)
-    BPLONG t;
+char *picat_get_atom_name(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -423,27 +385,22 @@ char *picat_get_atom_name(t)
     }
 }
 
-char *bp_get_atom_name(t)
-    BPLONG t;
+char *bp_get_atom_name(BPLONG t)
 {
     return picat_get_atom_name(t);
 }
 
-int bp_unify(t1, t2)
-    BPLONG t1, t2;
+int bp_unify(BPLONG t1, BPLONG t2)
 {
     return unify(t1, t2);
 }
 
-int picat_unify(t1, t2)
-    BPLONG t1, t2;
+int picat_unify(BPLONG t1, BPLONG t2)
 {
     return unify(t1, t2);
 }
 
-BPLONG picat_get_arg(i, t)
-    BPLONG i;
-    BPLONG t;
+BPLONG picat_get_arg(BPLONG i, BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -457,15 +414,12 @@ BPLONG picat_get_arg(i, t)
     }
 }
 
-BPLONG bp_get_arg(i, t)
-    BPLONG i;
-    BPLONG t;
+BPLONG bp_get_arg(BPLONG i, BPLONG t)
 {
     return picat_get_arg(i, t);
 }
 
-BPLONG picat_get_car(t)
-    BPLONG t;
+BPLONG picat_get_car(BPLONG t)
 {
 
     BPLONG_PTR top;
@@ -478,14 +432,12 @@ BPLONG picat_get_car(t)
     }
 }
 
-BPLONG bp_get_car(t)
-    BPLONG t;
+BPLONG bp_get_car(BPLONG t)
 {
     return picat_get_car(t);
 }
 
-BPLONG picat_get_cdr(t)
-    BPLONG t;
+BPLONG picat_get_cdr(BPLONG t)
 {
     BPLONG_PTR top;
     DEREF(t);
@@ -497,8 +449,7 @@ BPLONG picat_get_cdr(t)
     }
 }
 
-BPLONG bp_get_cdr(t)
-    BPLONG t;
+BPLONG bp_get_cdr(BPLONG t)
 {
     return picat_get_cdr(t);
 }
@@ -513,8 +464,7 @@ BPLONG bp_build_var() {
     return picat_build_var();
 }
 
-BPLONG picat_build_integer(i)
-    BPLONG i;
+BPLONG picat_build_integer(BPLONG i)
 {
     if (i >= BP_MININT_1W && i <= BP_MAXINT_1W) {
         return MAKEINT(i);
@@ -523,32 +473,27 @@ BPLONG picat_build_integer(i)
     }
 }
 
-BPLONG bp_build_integer(i)
-    BPLONG i;
+BPLONG bp_build_integer(BPLONG i)
 {
     return picat_build_integer(i);
 }
 
-BPLONG picat_build_float(f)
-    double f;
+BPLONG picat_build_float(double f)
 {
     return encodefloat1(f);
 }
 
-BPLONG bp_build_float(f)
-    double f;
+BPLONG bp_build_float(double f)
 {
     return encodefloat1(f);
 }
 
-BPLONG picat_build_atom(name)
-    const char *name;
+BPLONG picat_build_atom(const char *name)
 {
     return ADDTAG(insert_sym(name, strlen(name), 0), ATM);
 }
 
-BPLONG bp_build_atom(name)
-    const char *name;
+BPLONG bp_build_atom(const char *name)
 {
     return picat_build_atom(name);
 }
@@ -576,9 +521,7 @@ BPLONG bp_build_nil()
     return nil_sym;
 }
 
-BPLONG picat_build_structure(name, arity)
-    char *name;
-    BPLONG arity;
+BPLONG picat_build_structure(char *name, BPLONG arity)
 {
     BPLONG res;
     BPLONG i;
@@ -590,15 +533,12 @@ BPLONG picat_build_structure(name, arity)
     return res;
 }
 
-BPLONG bp_build_structure(name, arity)
-    char *name;
-    BPLONG arity;
+BPLONG bp_build_structure(char *name, BPLONG arity)
 {
     return picat_build_structure(name, arity);
 }
 
-BPLONG picat_build_array(n)
-    BPLONG n;
+BPLONG picat_build_array(BPLONG n)
 {
     return picat_build_structure("{}", n);
 }
@@ -666,10 +606,7 @@ int term_2_string() {
     return unify(op2, list);
 }
 
-int bp_string_2_term(str, term, vars)
-    char *str;
-    BPLONG term;
-    BPLONG vars;
+int bp_string_2_term(char *str, BPLONG term, BPLONG vars)
 {
     BPLONG res;
     BPLONG Read;
@@ -694,8 +631,7 @@ int bp_string_2_term(str, term, vars)
    The function call toam() does not return if an exception occurs
    during its execution that is not handled
 */
-int bp_call_term(term)
-    BPLONG term;
+int bp_call_term(BPLONG term)
 {
     BPLONG res;
 
@@ -718,8 +654,7 @@ int bp_call_term(term)
    The function call toam() does not return if an exception occurs
    during its execution that is not handled
 */
-int bp_call_term_once(term)
-    BPLONG term;
+int bp_call_term_once(BPLONG term)
 {
     BPLONG res;
     BPLONG_PTR old_b = (BPLONG_PTR)((BPULONG)stack_up_addr-(BPULONG)breg);
@@ -744,8 +679,7 @@ int bp_call_term_once(term)
 /* Call catch(once(term),E,Handler), where Handler sets the exception variable to E before calling halt.
    The function call toam() is guaranteed to return.
 */
-int bp_call_term_catch(term)
-    BPLONG term;
+int bp_call_term_catch(BPLONG term)
 {
     BPLONG res;
     BPLONG_PTR old_b = (BPLONG_PTR)((BPULONG)stack_up_addr-(BPULONG)breg);
@@ -783,8 +717,7 @@ int c_set_bp_exception() {
     return BP_TRUE;
 }
 
-int bp_call_string(cmd)
-    char *cmd;
+int bp_call_string(char *cmd)
 {
     BPLONG Pcmd, vars, res;
     int old_bp_gc;
@@ -804,8 +737,7 @@ int bp_call_string(cmd)
     return res;
 }
 
-int bp_mount_query_string(cmd)
-    char *cmd;
+int bp_mount_query_string(char *cmd)
 {
     BPLONG res;
     int old_bp_gc;
@@ -824,8 +756,7 @@ int bp_mount_query_string(cmd)
     return bp_mount_query_term(term);
 }
 
-int bp_mount_query_term(term)
-    BPLONG term;
+int bp_mount_query_term(BPLONG term)
 {
     init_stack(0);
     FOLLOW(arreg+1) = term;
@@ -879,9 +810,7 @@ void expand_bp_str_bag() {
     bp_sol_bag_ptr->buf = new_buf;
 }
 
-void append_str_to_solution_bag(str, len, check_quote)
-    char *str;
-BPLONG len, check_quote;
+void append_str_to_solution_bag(char *str, BPLONG len, BPLONG check_quote)
 {
     if (bp_sol_bag_ptr->pos + len + 10 >= bp_sol_bag_ptr->size) {  /* 10 may not be enough */
         expand_bp_str_bag();
@@ -896,8 +825,7 @@ BPLONG len, check_quote;
     }
 }
 
-char *bp_term_2_string(term)
-    BPLONG term;
+char *bp_term_2_string(BPLONG term)
 {
     if (bp_sol_bag_ptr == NULL) initialize_bp_str_bag();
     bp_sol_bag_ptr->pos = 0;
@@ -907,8 +835,7 @@ char *bp_term_2_string(term)
     return bp_sol_bag_ptr->buf;
 }
 
-void aux_term_2_string_term(term)
-    BPLONG term;
+void aux_term_2_string_term(BPLONG term)
 {
     char buf[MAX_STR_LEN];
     SYM_REC_PTR sym_ptr;
@@ -949,8 +876,7 @@ void aux_term_2_string_term(term)
                   append_str_to_solution_bag(buf, strlen(buf), 0);});
 }
 
-void aux_term_2_string_list(term)
-    BPLONG term;
+void aux_term_2_string_list(BPLONG term)
 {
     BPLONG temp;
     BPLONG_PTR top;
@@ -971,14 +897,12 @@ void aux_term_2_string_list(term)
         append_str_to_solution_bag("]", 1, 0);
 }
 
-void bp_write(term)
-    BPLONG term;
+void bp_write(BPLONG term)
 {
     write_term(term);
 }
 
-void picat_write_term(term)
-    BPLONG term;
+void picat_write_term(BPLONG term)
 {
     write_term(term);
 }
@@ -1098,6 +1022,10 @@ int c_IS_SMALL_INT_c() {
 
 #ifdef FANN
 extern int fann_cpreds();
+#endif
+
+#ifdef SCIPSUITE
+extern int Cboot_scip();
 #endif
 
 #ifdef PRISM
@@ -1238,22 +1166,22 @@ void Cboot() {
       Cboot_glpk();
       #endif
     */
-    insert_cpred("c_sat_start_dump", 1, c_sat_start_dump);
-    insert_cpred("c_sat_stop_dump", 0, c_sat_stop_dump);
-    insert_cpred("c_sat_start_count", 1, c_sat_start_count);
-    insert_cpred("c_sat_stop_count", 1, c_sat_stop_count);
-    insert_cpred("c_sat_propagate_dom_bits", 2, c_sat_propagate_dom_bits);
 
     insert_cpred("c_REDUCE_DOMAINS_IC_EQ", 2, c_REDUCE_DOMAINS_IC_EQ);
     insert_cpred("c_REDUCE_DOMAINS_IC_GE", 2, c_REDUCE_DOMAINS_IC_GE);
     //  insert_cpred("c_REDUCE_DOMAIN_AC_ADD",3,c_REDUCE_DOMAIN_AC_ADD);
     insert_cpred("c_TA_TOP_f", 1, c_TA_TOP_f);
-    Cboot_sat();
 #ifdef SAT
+    insert_cpred("c_sat_propagate_dom_bits", 2, c_sat_propagate_dom_bits);
+    Cboot_sat();
     insert_cpred("c_call_espresso", 5, c_call_espresso);
     insert_cpred("c_call_espresso_pb", 6, c_call_espresso_pb);
 #endif
 
+#ifdef SCIPSUITE
+    Cboot_scip();
+#endif
+    
 #ifdef PRISM
     bp4p_register_preds();
 #endif
@@ -1273,7 +1201,7 @@ void Cboot() {
     insert_cpred("regex_replace_first",4,regex_replace_first);   
     insert_cpred("regex_find_matches",4,regex_find_matches);   
 
-    
+ 
 }
 
 /* by S. Branch */
